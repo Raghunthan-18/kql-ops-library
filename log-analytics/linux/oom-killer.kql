@@ -1,0 +1,11 @@
+// Title: Processes killed by the OOM killer
+// Source: Log Analytics
+// Tables: Syslog
+// When to use: A Linux service keeps restarting with no application error. The kernel killed it for memory.
+
+Syslog
+| where TimeGenerated > ago(7d)
+| where Facility == "kern" and SyslogMessage has_any ("Out of memory", "oom-kill", "Killed process")
+| extend Victim = extract(@"Killed process \d+ \(([^)]+)\)", 1, SyslogMessage)
+| project TimeGenerated, HostName, Victim, SyslogMessage
+| order by TimeGenerated desc

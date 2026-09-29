@@ -1,0 +1,9 @@
+// Title: Public IPs not attached to anything
+// Source: Resource Graph
+// Tables: resources
+// When to use: Standard SKU public IPs bill even when unused.
+
+resources
+| where type =~ 'microsoft.network/publicipaddresses'
+| where isempty(properties.ipConfiguration) and isempty(properties.natGateway)
+| project name, Ip = tostring(properties.ipAddress), Sku = tostring(sku.name), resourceGroup, subscriptionId

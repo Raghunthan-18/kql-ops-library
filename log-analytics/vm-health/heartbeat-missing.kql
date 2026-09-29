@@ -1,0 +1,12 @@
+// Title: VMs that stopped sending heartbeats
+// Source: Log Analytics
+// Tables: Heartbeat
+// When to use: First query for a Node Down alert. Tells you which machines went silent and when.
+// Tune: 10m threshold suits 1-minute heartbeats. Raise it if agents are known to be slow.
+
+Heartbeat
+| where TimeGenerated > ago(1d)
+| summarize LastHeartbeat = max(TimeGenerated) by Computer, OSType, _ResourceId
+| where LastHeartbeat < ago(10m)
+| extend MinutesSilent = datetime_diff('minute', now(), LastHeartbeat)
+| order by MinutesSilent desc

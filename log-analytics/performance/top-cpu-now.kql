@@ -1,0 +1,11 @@
+// Title: Top 10 busiest machines right now
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Quick look during an incident when many alerts fire at once.
+// Tune: Window 15m.
+
+Perf
+| where TimeGenerated > ago(15m)
+| where ObjectName == "Processor" and CounterName == "% Processor Time" and InstanceName in ("_Total", "total")
+| summarize AvgCpu = round(avg(CounterValue), 1) by Computer
+| top 10 by AvgCpu desc

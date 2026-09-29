@@ -1,0 +1,11 @@
+// Title: Monitoring agent versions
+// Source: Log Analytics
+// Tables: Heartbeat
+// When to use: Before an agent upgrade, or when one machine behaves differently from the rest.
+// Tune: Category shows the agent type (Azure Monitor Agent, Direct Agent, etc.).
+
+Heartbeat
+| where TimeGenerated > ago(1h)
+| summarize arg_max(TimeGenerated, Category, Version, OSType) by Computer
+| summarize Machines = count(), Examples = make_set(Computer, 5) by Category, Version, OSType
+| order by Category asc, Version asc

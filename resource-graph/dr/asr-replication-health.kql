@@ -1,0 +1,13 @@
+// Title: Site Recovery replication health
+// Source: Resource Graph
+// Tables: recoveryservicesresources
+// When to use: Before a DR drill, or when ASR sync alerts fire. Shows RPO and when DR was last proven.
+// Tune: Azure-to-Azure replication.
+
+recoveryservicesresources
+| where type =~ 'microsoft.recoveryservices/vaults/replicationfabrics/replicationprotectioncontainers/replicationprotecteditems'
+| project Vm = tostring(properties.friendlyName), Vault = tostring(split(id, '/')[8]),
+          Health = tostring(properties.replicationHealth), State = tostring(properties.protectionStateDescription),
+          RpoSeconds = toint(properties.providerSpecificDetails.rpoInSeconds),
+          LastTestFailover = todatetime(properties.lastSuccessfulTestFailoverTime)
+| order by Health desc, Vm asc

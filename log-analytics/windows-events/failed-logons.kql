@@ -1,0 +1,12 @@
+// Title: Brute-force logon attempts
+// Source: Log Analytics
+// Tables: SecurityEvent
+// When to use: Spike in failed logons against one machine, or one IP trying many accounts.
+// Tune: Needs SecurityEvent collection (Defender for Cloud or Sentinel). 20 attempts per hour is the line here.
+
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4625
+| summarize Attempts = count(), Accounts = dcount(TargetAccount), SampleAccounts = make_set(TargetAccount, 5) by IpAddress, Computer
+| where Attempts > 20
+| order by Attempts desc

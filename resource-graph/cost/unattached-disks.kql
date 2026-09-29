@@ -1,0 +1,11 @@
+// Title: Unattached managed disks
+// Source: Resource Graph
+// Tables: resources
+// When to use: Monthly cost cleanup. Unattached disks bill in full.
+// Tune: Confirm with the owner before deleting; some are kept deliberately after a VM is removed.
+
+resources
+| where type =~ 'microsoft.compute/disks'
+| where tostring(properties.diskState) =~ 'Unattached'
+| project name, SizeGB = toint(properties.diskSizeGB), Sku = tostring(sku.name), TimeCreated = todatetime(properties.timeCreated), resourceGroup, subscriptionId
+| order by SizeGB desc

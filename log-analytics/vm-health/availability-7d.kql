@@ -1,0 +1,11 @@
+// Title: Availability % per VM from heartbeats
+// Source: Log Analytics
+// Tables: Heartbeat
+// When to use: Monthly SLA reporting, or proving a VM was actually up during an incident window.
+// Tune: Assumes 1 heartbeat per minute. Change the 7d window and 10080 (minutes in 7 days) together.
+
+Heartbeat
+| where TimeGenerated > ago(7d)
+| summarize MinutesUp = dcount(bin(TimeGenerated, 1m)) by Computer
+| extend AvailabilityPct = round(100.0 * MinutesUp / 10080, 2)
+| order by AvailabilityPct asc

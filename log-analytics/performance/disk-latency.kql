@@ -1,0 +1,12 @@
+// Title: Slow disks (Windows)
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Application is slow but CPU and memory look fine. Often it is storage throttling.
+// Tune: 25 ms average is a common warning line for Premium SSD; tune for your disk tier.
+
+Perf
+| where TimeGenerated > ago(1h)
+| where ObjectName == "LogicalDisk" and CounterName == "Avg. Disk sec/Transfer" and InstanceName != "_Total"
+| summarize AvgMs = round(avg(CounterValue) * 1000, 1), P95Ms = round(percentile(CounterValue, 95) * 1000, 1) by Computer, InstanceName
+| where AvgMs > 25
+| order by AvgMs desc

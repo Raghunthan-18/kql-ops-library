@@ -1,0 +1,17 @@
+// Title: NSG rules exposing SSH/RDP to the internet
+// Source: Resource Graph
+// Tables: resources
+// When to use: Security review. Any hit here is a finding.
+// Tune: Checks single ports and port lists. Port ranges like 20-25 are not expanded; review '*' and ranges by hand.
+
+resources
+| where type =~ 'microsoft.network/networksecuritygroups'
+| mv-expand rule = properties.securityRules
+| extend Direction = tostring(rule.properties.direction), Access = tostring(rule.properties.access),
+         Source = tostring(rule.properties.sourceAddressPrefix),
+         Port = tostring(rule.properties.destinationPortRange),
+         Ports = tostring(rule.properties.destinationPortRanges)
+| where Direction =~ 'Inbound' and Access =~ 'Allow'
+| where Source in ('*', 'Internet', '0.0.0.0/0', 'Any')
+| where Port in ('22', '3389', '*') or Ports contains '"22"' or Ports contains '"3389"'
+| project Nsg = name, Rule = tostring(rule.name), Source, Port, Ports, resourceGroup, subscriptionId

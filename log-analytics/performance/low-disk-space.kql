@@ -1,0 +1,13 @@
+// Title: Volumes under 10% free
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Daily check. A full disk stops databases, logging and backups.
+// Tune: Windows object is 'LogicalDisk', Linux is 'Logical Disk'. Both are covered.
+
+Perf
+| where TimeGenerated > ago(1h)
+| where ObjectName in ("LogicalDisk", "Logical Disk") and CounterName == "% Free Space"
+| where InstanceName !in ("_Total", "total", "HarddiskVolume1")
+| summarize FreePct = round(arg_max(TimeGenerated, CounterValue).CounterValue, 1) by Computer, InstanceName
+| where FreePct < 10
+| order by FreePct asc

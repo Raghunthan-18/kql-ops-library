@@ -1,0 +1,13 @@
+// Title: RBAC role assignments added or removed
+// Source: Log Analytics
+// Tables: AzureActivity
+// When to use: Access reviews, or checking who granted someone Owner.
+
+AzureActivity
+| where TimeGenerated > ago(30d)
+| where OperationNameValue in~ (
+    "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE",
+    "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/DELETE")
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, Operation = iff(OperationNameValue endswith "DELETE", "Removed", "Added"), Scope = _ResourceId
+| order by TimeGenerated desc

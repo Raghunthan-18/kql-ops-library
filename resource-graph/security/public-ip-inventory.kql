@@ -1,0 +1,11 @@
+// Title: Public IPs and what they are attached to
+// Source: Resource Graph
+// Tables: resources
+// When to use: Know your internet-facing surface. Anything unexpected here is a question for its owner.
+
+resources
+| where type =~ 'microsoft.network/publicipaddresses'
+| extend Ip = tostring(properties.ipAddress), AttachedTo = tostring(properties.ipConfiguration.id)
+| extend AttachedType = iff(isempty(AttachedTo), '(unattached)', tostring(split(AttachedTo, '/')[7]))
+| project name, Ip, AttachedType, AttachedTo, sku = tostring(sku.name), resourceGroup, subscriptionId
+| order by AttachedType asc

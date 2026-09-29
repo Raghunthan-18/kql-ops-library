@@ -1,0 +1,12 @@
+// Title: Sustained high CPU
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Triage for a High CPU alert: confirms whether the spike is sustained or a one-off.
+// Tune: 90% over 15-minute bins. If you use VM insights, the same data is in InsightsMetrics (Namespace 'Processor', Name 'UtilizationPercentage').
+
+Perf
+| where TimeGenerated > ago(4h)
+| where ObjectName == "Processor" and CounterName == "% Processor Time" and InstanceName in ("_Total", "total")
+| summarize AvgCpu = round(avg(CounterValue), 1), MaxCpu = round(max(CounterValue), 1) by Computer, bin(TimeGenerated, 15m)
+| where AvgCpu > 90
+| order by Computer asc, TimeGenerated asc

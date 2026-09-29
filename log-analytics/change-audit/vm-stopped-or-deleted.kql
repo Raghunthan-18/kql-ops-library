@@ -1,0 +1,16 @@
+// Title: VMs stopped, deallocated or deleted
+// Source: Log Analytics
+// Tables: AzureActivity
+// When to use: Node Down alert with no crash in the event log. Someone may have stopped it.
+
+AzureActivity
+| where TimeGenerated > ago(7d)
+| where OperationNameValue in~ (
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/DEALLOCATE/ACTION",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/POWEROFF/ACTION",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/DELETE",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/RESTART/ACTION")
+| where ActivityStatusValue == "Success"
+| extend Vm = tostring(split(_ResourceId, "/")[8]), Action = tostring(split(OperationNameValue, "/")[2])
+| project TimeGenerated, Vm, Action, Caller, ResourceGroup
+| order by TimeGenerated desc

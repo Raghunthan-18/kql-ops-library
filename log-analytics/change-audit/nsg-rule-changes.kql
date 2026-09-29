@@ -1,0 +1,15 @@
+// Title: Who changed NSG rules
+// Source: Log Analytics
+// Tables: AzureActivity
+// When to use: Traffic suddenly blocked or opened. First question: did someone change a rule?
+// Tune: Covers create/update and delete of individual rules.
+
+AzureActivity
+| where TimeGenerated > ago(7d)
+| where OperationNameValue in~ (
+    "MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/WRITE",
+    "MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/DELETE")
+| where ActivityStatusValue == "Success"
+| extend Nsg = tostring(split(_ResourceId, "/")[8]), Rule = tostring(split(_ResourceId, "/")[10])
+| project TimeGenerated, Caller, Operation = iff(OperationNameValue endswith "DELETE", "Delete", "Write"), Nsg, Rule, ResourceGroup
+| order by TimeGenerated desc

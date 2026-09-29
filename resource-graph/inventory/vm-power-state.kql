@@ -1,0 +1,11 @@
+// Title: VM power state across subscriptions
+// Source: Resource Graph
+// Tables: resources
+// When to use: How many VMs are running vs deallocated, across every subscription, in seconds.
+// Tune: Run in Resource Graph Explorer. Remove the summarize line to list each VM.
+
+resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| extend PowerState = tostring(properties.extended.instanceView.powerState.code)
+| summarize VMs = count() by subscriptionId, PowerState
+| order by subscriptionId asc, VMs desc

@@ -1,0 +1,15 @@
+// Title: CPU anomalies against each VM's own baseline
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Finds machines behaving unusually for themselves, where a flat 90% threshold would never fire (a VM that normally sits at 5% now at 60%).
+// Tune: 2.5 is the anomaly sensitivity; lower = more results.
+
+Perf
+| where TimeGenerated > ago(14d)
+| where ObjectName == "Processor" and CounterName == "% Processor Time" and InstanceName in ("_Total", "total")
+| make-series Cpu = avg(CounterValue) default = 0 on TimeGenerated from ago(14d) to now() step 1h by Computer
+| extend Anomalies = series_decompose_anomalies(Cpu, 2.5)
+| mv-expand TimeGenerated to typeof(datetime), Cpu to typeof(double), Anomalies to typeof(double)
+| where Anomalies > 0 and TimeGenerated > ago(24h)
+| project Computer, TimeGenerated, Cpu = round(Cpu, 1)
+| order by TimeGenerated desc

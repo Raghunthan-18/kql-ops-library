@@ -1,0 +1,11 @@
+// Title: Windows services that crashed
+// Source: Log Analytics
+// Tables: Event
+// When to use: App down but the VM is up. Shows which service died and how often.
+// Tune: 7031/7034 from Service Control Manager.
+
+Event
+| where TimeGenerated > ago(24h)
+| where EventLog == "System" and Source == "Service Control Manager" and EventID in (7031, 7034)
+| summarize Crashes = count(), Last = max(TimeGenerated), Sample = any(RenderedDescription) by Computer
+| order by Crashes desc

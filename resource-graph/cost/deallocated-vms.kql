@@ -1,0 +1,9 @@
+// Title: Deallocated VMs still paying for disks
+// Source: Resource Graph
+// Tables: resources
+// When to use: A deallocated VM stops compute billing but its disks keep costing money. Candidates to snapshot and delete.
+
+resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| where tostring(properties.extended.instanceView.powerState.code) =~ 'PowerState/deallocated'
+| project VmName = name, VmSize = tostring(properties.hardwareProfile.vmSize), resourceGroup, subscriptionId, Tags = tags

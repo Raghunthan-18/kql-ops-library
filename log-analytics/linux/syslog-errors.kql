@@ -1,0 +1,11 @@
+// Title: Syslog errors by host and process
+// Source: Log Analytics
+// Tables: Syslog
+// When to use: Linux equivalent of scanning the System event log. Find the noisy process first.
+// Tune: Severities err and above.
+
+Syslog
+| where TimeGenerated > ago(24h)
+| where SeverityLevel in ("err", "crit", "alert", "emerg")
+| summarize Count = count(), Sample = any(SyslogMessage) by HostName, ProcessName, SeverityLevel
+| order by Count desc

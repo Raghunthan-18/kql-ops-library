@@ -1,0 +1,9 @@
+// Title: VM count by size and OS
+// Source: Resource Graph
+// Tables: resources
+// When to use: Capacity planning, reservation purchases, or checking for sizes about to be retired.
+
+resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| summarize VMs = count() by VmSize = tostring(properties.hardwareProfile.vmSize), OS = tostring(properties.storageProfile.osDisk.osType)
+| order by VMs desc

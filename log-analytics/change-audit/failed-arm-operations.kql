@@ -1,0 +1,10 @@
+// Title: Failed Azure operations by caller
+// Source: Log Analytics
+// Tables: AzureActivity
+// When to use: Pipeline or automation failing silently; or someone repeatedly hitting a policy deny.
+
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where ActivityStatusValue == "Failure"
+| summarize Failures = count(), Last = max(TimeGenerated) by Caller, OperationNameValue, ResourceGroup
+| order by Failures desc

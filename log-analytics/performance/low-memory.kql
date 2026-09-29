@@ -1,0 +1,14 @@
+// Title: Low memory (Windows and Linux)
+// Source: Log Analytics
+// Tables: Perf
+// When to use: Memory pressure causes slowness that looks like a CPU or app problem. Check this alongside High CPU alerts.
+// Tune: Windows: under 500 MB available. Linux: over 90% used.
+
+Perf
+| where TimeGenerated > ago(30m)
+| where (ObjectName == "Memory" and CounterName == "Available MBytes")
+     or (ObjectName == "Memory" and CounterName == "% Used Memory")
+| summarize Value = round(avg(CounterValue), 1) by Computer, CounterName
+| where (CounterName == "Available MBytes" and Value < 500)
+     or (CounterName == "% Used Memory" and Value > 90)
+| order by Computer asc

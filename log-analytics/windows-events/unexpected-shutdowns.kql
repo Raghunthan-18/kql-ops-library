@@ -1,0 +1,12 @@
+// Title: Unexpected shutdowns and reboots
+// Source: Log Analytics
+// Tables: Event
+// When to use: After a Node Down alert clears: was it a crash, a power event, or a planned restart?
+// Tune: 6008 = previous shutdown was unexpected. 41 = Kernel-Power, rebooted without clean shutdown. 1074 = planned, who and why.
+
+Event
+| where TimeGenerated > ago(7d)
+| where EventLog == "System" and EventID in (6008, 41, 1074)
+| extend Kind = case(EventID == 1074, "Planned", "Unexpected")
+| project TimeGenerated, Computer, Kind, EventID, Source, RenderedDescription
+| order by TimeGenerated desc

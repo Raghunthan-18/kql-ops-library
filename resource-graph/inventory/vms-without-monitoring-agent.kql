@@ -1,0 +1,18 @@
+// Title: VMs with no Azure Monitor Agent
+// Source: Resource Graph
+// Tables: resources
+// When to use: A VM without an agent never alerts. Find monitoring blind spots before an outage does.
+// Tune: Checks for the AzureMonitorWindowsAgent / AzureMonitorLinuxAgent extension.
+
+resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| project vmId = tolower(id), VmName = name, resourceGroup, subscriptionId, OS = tostring(properties.storageProfile.osDisk.osType)
+| join kind=leftouter (
+    resources
+    | where type =~ 'microsoft.compute/virtualmachines/extensions'
+    | where tostring(properties.type) in~ ('AzureMonitorWindowsAgent', 'AzureMonitorLinuxAgent')
+    | project vmId = tolower(tostring(split(id, '/extensions/')[0])), HasAgent = 1
+  ) on vmId
+| where isnull(HasAgent)
+| project VmName, OS, resourceGroup, subscriptionId
+| order by subscriptionId asc, VmName asc

@@ -1,0 +1,9 @@
+// Title: Storage accounts allowing public blob access
+// Source: Resource Graph
+// Tables: resources
+// When to use: Common data-leak cause. Should normally return nothing.
+
+resources
+| where type =~ 'microsoft.storage/storageaccounts'
+| where tobool(properties.allowBlobPublicAccess) == true
+| project name, resourceGroup, subscriptionId, MinTls = tostring(properties.minimumTlsVersion)

@@ -1,0 +1,16 @@
+// Title: Failed Azure Backup jobs
+// Source: Log Analytics
+// Tables: AddonAzureBackupJobs, CoreAzureBackup
+// When to use: Morning check of last night's backups, with the error code needed for a support case.
+// Tune: Vault diagnostic settings must send these tables in resource-specific mode.
+
+AddonAzureBackupJobs
+| where TimeGenerated > ago(24h)
+| where JobOperation == "Backup" and JobStatus == "Failed"
+| join kind=leftouter (
+    CoreAzureBackup
+    | where OperationName == "BackupItem"
+    | summarize arg_max(TimeGenerated, BackupItemFriendlyName) by BackupItemUniqueId
+  ) on BackupItemUniqueId
+| project TimeGenerated, BackupItem = BackupItemFriendlyName, JobFailureCode, JobStartDateTime, JobDurationInSecs
+| order by TimeGenerated desc

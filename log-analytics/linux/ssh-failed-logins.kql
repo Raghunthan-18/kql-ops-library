@@ -1,0 +1,13 @@
+// Title: Failed SSH logins
+// Source: Log Analytics
+// Tables: Syslog
+// When to use: Detect SSH brute force, or confirm a user's key/password problem.
+// Tune: Needs the auth/authpriv facility in the data collection rule.
+
+Syslog
+| where TimeGenerated > ago(24h)
+| where Facility in ("auth", "authpriv") and SyslogMessage has "Failed password"
+| extend SourceIp = extract(@"from (\d+\.\d+\.\d+\.\d+)", 1, SyslogMessage),
+         User = extract(@"for (invalid user )?(\S+)", 2, SyslogMessage)
+| summarize Attempts = count(), Users = make_set(User, 5) by HostName, SourceIp
+| order by Attempts desc

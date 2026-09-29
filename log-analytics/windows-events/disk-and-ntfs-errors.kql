@@ -1,0 +1,11 @@
+// Title: Disk and file-system errors
+// Source: Log Analytics
+// Tables: Event
+// When to use: Pairs with Hardware Status alerts. Early warning before a disk fails outright.
+// Tune: Event IDs 7, 51, 153 (disk), 55 (Ntfs corruption).
+
+Event
+| where TimeGenerated > ago(7d)
+| where EventLog == "System" and Source in ("disk", "Ntfs", "storvsc") and EventID in (7, 51, 55, 153)
+| summarize Errors = count(), First = min(TimeGenerated), Last = max(TimeGenerated) by Computer, Source, EventID
+| order by Errors desc

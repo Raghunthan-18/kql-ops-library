@@ -1,0 +1,16 @@
+// Title: Heartbeat gaps (flapping machines)
+// Source: Log Analytics
+// Tables: Heartbeat
+// When to use: A VM that is up now but dropped out several times today. Catches flaky network or agent restarts that a point-in-time check misses.
+// Tune: Gap threshold 5m. Machines with 3+ gaps are worth a look.
+
+Heartbeat
+| where TimeGenerated > ago(24h)
+| project Computer, TimeGenerated
+| sort by Computer asc, TimeGenerated asc
+| extend PrevTime = prev(TimeGenerated), PrevComputer = prev(Computer)
+| where Computer == PrevComputer
+| extend Gap = TimeGenerated - PrevTime
+| where Gap > 5m
+| summarize Gaps = count(), LongestGap = max(Gap), LastGapAt = max(PrevTime) by Computer
+| order by Gaps desc

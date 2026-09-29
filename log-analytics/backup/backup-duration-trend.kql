@@ -1,0 +1,16 @@
+// Title: Backup jobs getting slower
+// Source: Log Analytics
+// Tables: AddonAzureBackupJobs, CoreAzureBackup
+// When to use: Backups that keep growing will eventually overrun their window. Catch it early.
+// Tune: Flags items whose last-7-day average is 50%+ longer than the 7 days before.
+
+AddonAzureBackupJobs
+| where TimeGenerated > ago(14d)
+| where JobOperation == "Backup" and JobStatus == "Completed"
+| extend Period = iff(TimeGenerated > ago(7d), "Recent", "Previous")
+| summarize AvgMins = avg(JobDurationInSecs) / 60 by BackupItemUniqueId, Period
+| evaluate pivot(Period, sum(AvgMins))
+| where isnotnull(Recent) and isnotnull(Previous) and Recent > Previous * 1.5
+| join kind=leftouter (CoreAzureBackup | where OperationName == "BackupItem" | summarize arg_max(TimeGenerated, BackupItemFriendlyName) by BackupItemUniqueId) on BackupItemUniqueId
+| project BackupItem = BackupItemFriendlyName, PreviousMins = round(Previous, 1), RecentMins = round(Recent, 1)
+| order by RecentMins desc
